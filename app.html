@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>繪旅人全能管理工具</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #faf6f1;
+    --warm-white: #fff9f4;
+    --rose: #c4847a;
+    --rose-light: #e8b4ae;
+    --rose-pale: #f5e0dc;
+    --gold: #b8943a;
+    --gold-light: #d4af6a;
+    --sage: #8a9e8f;
+    --sage-light: #c8d8cb;
+    --ink: #2c2420;
+    --ink-mid: #5a4a44;
+    --ink-light: #8a7a74;
+    --border: #e8ddd8;
+    --shadow: rgba(44,36,32,0.08);
+    --shadow-strong: rgba(44,36,32,0.18);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { 
+    background: var(--cream); 
+    color: var(--ink); 
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(196,132,122,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(184,148,58,0.05) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  #root { position: relative; z-index: 1; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--rose-pale); }
+  ::-webkit-scrollbar-thumb { background: var(--rose-light); border-radius: 3px; }
+
+  /* Header */
+  .app-header {
+    background: linear-gradient(135deg, #2c2420 0%, #4a3030 50%, #3a2c28 100%);
+    padding: 20px 24px 0;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 4px 24px var(--shadow-strong);
+  }
+  .app-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--gold-light);
+    letter-spacing: 0.08em;
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .app-title .sub { font-size: 12px; color: var(--rose-light); font-weight: 400; font-family: 'Noto Sans TC'; letter-spacing: 0.15em; }
+  
+  .tab-bar {
+    display: flex; gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    padding: 10px 18px;
+    border: none; background: transparent;
+    color: rgba(255,249,244,0.5);
+    font-family: 'Noto Sans TC'; font-size: 13px; font-weight: 500;
+    cursor: pointer; white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--rose-light); }
+  .tab-btn.active { 
+    color: var(--gold-light); 
+    border-bottom-color: var(--gold-light);
+  }
+
+  /* Main content */
+  .main { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+
+  /* Cards */
+  .card {
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 12px var(--shadow);
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 600;
+    color: var(--rose);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .icon { font-size: 16px; }
+
+  /* Form elements */
+  label { display: block; font-size: 12px; color: var(--ink-light); margin-bottom: 4px; font-weight: 500; letter-spacing: 0.05em; }
+  input, select, textarea {
+    width: 100%; padding: 9px 12px;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--ink);
+    font-family: 'Noto Sans TC'; font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--rose-light);
+    box-shadow: 0 0 0 3px rgba(196,132,122,0.1);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .form-row { display: grid; gap: 12px; margin-bottom: 12px; }
+  .form-row.col2 { grid-template-columns: 1fr 1fr; }
+  .form-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; }
+
+  /* Buttons */
+  .btn {
+    padding: 9px 18px;
+    border: none; border-radius: 8px;
+    font-family: 'Noto Sans TC'; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all 0.2s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--rose), #a06870);
+    color: white;
+    box-shadow: 0 2px 8px rgba(196,132,122,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(196,132,122,0.4); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold), #9a7a2a);
+    color: white;
+    box-shadow: 0 2px 8px rgba(184,148,58,0.3);
+  }
+  .btn-gold:hover { transform: translateY(-1px); }
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-mid);
+  }
+  .btn-outline:hover { border-color: var(--rose-light); color: var(--rose); }
+  .btn-danger { background: #dc6060; color: white; }
+  .btn-danger:hover { background: #c44848; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 5px; }
+  .btn-icon { padding: 6px 8px; font-size: 14px; }
+
+  /* Stats / result boxes */
+  .stat-box {
+    background: linear-gradient(135deg, var(--rose-pale), #fdf0ec);
+    border: 1px solid var(--rose-light);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .stat-box .val { font-size: 26px; font-weight: 700; color: var(--rose); font-family: 'Cormorant Garamond'; }
+  .stat-box .lbl { font-size: 11px; color: var(--ink-light); margin-top: 2px; }
+  .stat-box.gold { background: linear-gradient(135deg, #fef9ed, #fdf3d4); border-color: var(--gold-light); }
+  .stat-box.gold .val { color: var(--gold); }
+  .stat-box.green { background: linear-gradient(135deg, #edf5ee, #dceedd); border-color: var(--sage); }
+  .stat-box.green .val { color: var(--sage); }
+  .stat-box.red { background: linear-gradient(135deg, #fdedf0, #fbd8de); border-color: #e08080; }
+  .stat-box.red .val { color: #c04040; }
+
+  /* Result alert */
+  .result-surplus { background: #edf5ee; border: 1px solid var(--sage); border-radius: 8px; padding: 12px 14px; color: #3a6a44; }
+  .result-deficit { background: #fdedf0; border: 1px solid #e08080; border-radius: 8px; padding: 12px 14px; color: #8a2020; }
+  .result-neutral { background: var(--rose-pale); border: 1px solid var(--rose-light); border-radius: 8px; padding: 12px 14px; }
+
+  /* Table */
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; min-width: 600px; }
+  thead tr { background: linear-gradient(90deg, #2c2420, #4a3030); }
+  thead th { 
+    padding: 10px 10px; text-align: left;
+    color: var(--gold-light); font-size: 11px; font-weight: 500;
+    letter-spacing: 0.08em; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(196,132,122,0.05); }
+  tbody td { padding: 9px 10px; font-size: 12px; vertical-align: middle; }
+  tbody tr.done td { opacity: 0.5; }
+
+  /* Badge */
+  .badge {
+    display: inline-block; padding: 2px 8px;
+    border-radius: 20px; font-size: 11px; font-weight: 500;
+  }
+  .badge-gold { background: #fef3d0; color: var(--gold); border: 1px solid var(--gold-light); }
+  .badge-rose { background: var(--rose-pale); color: var(--rose); border: 1px solid var(--rose-light); }
+  .badge-sage { background: #e4ede6; color: var(--sage); border: 1px solid var(--sage); }
+  .badge-gray { background: #eeebea; color: var(--ink-light); border: 1px solid var(--border); }
+  .badge-blue { background: #e8f0fd; color: #4a70c0; border: 1px solid #a0b8e8; }
+  .badge-purple { background: #f0e8fd; color: #7a4aaa; border: 1px solid #c0a0e0; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(44,36,32,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(3px);
+    animation: fadeIn 0.15s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+  .modal {
+    background: var(--warm-white);
+    border-radius: 16px;
+    padding: 24px;
+    width: 100%; max-width: 560px;
+    max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(44,36,32,0.3);
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+  .modal-title { 
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-weight: 600; color: var(--rose);
+    margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+  /* Stamina bar */
+  .stamina-bar-wrap { background: var(--rose-pale); border-radius: 100px; height: 10px; overflow: hidden; margin: 8px 0; }
+  .stamina-bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--rose), var(--gold-light)); transition: width 0.5s ease; }
+
+  /* Checkbox custom */
+  .check-wrap { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .check-wrap input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--rose); cursor: pointer; }
+
+  /* Character tabs */
+  .char-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+  .char-tab { 
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    background: var(--cream); color: var(--ink-mid);
+    transition: all 0.15s;
+  }
+  .char-tab.active { background: var(--rose); color: white; border-color: var(--rose); }
+  .char-tab:hover:not(.active) { border-color: var(--rose-light); }
+
+  /* Tag */
+  .tag { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.05em; }
+  .tag-ssr { background: linear-gradient(90deg, #f5c842, #e89020); color: white; }
+  .tag-sr { background: linear-gradient(90deg, #c06ec0, #9048c0); color: white; }
+
+  /* Grid stats row */
+  .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 16px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 40px 20px; color: var(--ink-light); }
+  .empty .icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* Info chip */
+  .info-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--rose-pale); border-radius: 20px; font-size: 11px; color: var(--ink-mid); }
+
+  /* Floating add button for mobile */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--rose), #a06870);
+    color: white; font-size: 24px; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(196,132,122,0.5);
+    z-index: 50;
+    transition: transform 0.2s;
+  }
+  .fab:hover { transform: scale(1.08); }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .form-row.col3 { grid-template-columns: 1fr 1fr; }
+    .main { padding: 14px 12px; }
+    .card { padding: 16px; }
+  }
+  @media (max-width: 400px) {
+    .form-row.col2 { grid-template-columns: 1fr; }
+    .form-row.col3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const now = () => Date.now();
+const STAMINA_RATE = 6;
+const MAX_STAMINA = 999;
+
+function staminaAtTime(base, baseTime, targetTime = now()) {
+  const mins = (targetTime - baseTime) / 60000;
+  return Math.min(MAX_STAMINA, base + Math.floor(mins / STAMINA_RATE));
+}
+function minsUntilNext(base, baseTime) {
+  const current = staminaAtTime(base, baseTime);
+  if (current >= MAX_STAMINA) return null;
+  const used = (now() - baseTime) / 60000;
+  const nextTick = STAMINA_RATE - (used % STAMINA_RATE);
+  return Math.ceil(nextTick);
+}
+function fmt(n) { return n == null ? '—' : Number(n).toLocaleString(); }
+function fmtDate(d) { if (!d) return '—'; const dt = new Date(d); return `${dt.getFullYear()}/${String(dt.getMonth()+1).padStart(2,'0')}/${String(dt.getDate()).padStart(2,'0')}`; }
+function today() { return new Date().toISOString().split('T')[0]; }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ─── LS ──────────────────────────────────────────────────────────────────────
+function ls(key, def) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
+}
+function lsSet(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) { console.warn('LS error', e); }
+}
+function useLS(key, def) {
+  const [state, setState] = useState(() => ls(key, def));
+  const set = useCallback(v => {
+    setState(prev => {
+      const next = typeof v === 'function' ? v(prev) : v;
+      lsSet(key, next);
+      return next;
+    });
+  }, [key]);
+  return [state, set];
+}
+
+// ─── Constants ───────────────────────────────────────────────────────────────
+const COMPLETION_OPTIONS = ['未完成','當代完成','復刻完成','手札開啟完成'];
+const SERVER_STATUS = ['未上','已上','已復刻'];
+const CHARACTERS = ['艾因','路辰','羅夏','司嵐','葉瑄','其他'];
+const RARITIES = ['SSR','SR'];
+const CHAR_COLORS = {
+  '艾因': { bg: '#e8f0fd', color: '#4a70c0', border: '#a0b8e8' },
+  '路辰': { bg: '#fdedf5', color: '#c04888', border: '#e8a0c8' },
+  '羅夏': { bg: '#fef9ed', color: '#b07020', border: '#d4af6a' },
+  '司嵐': { bg: '#edf5ee', color: '#3a6a44', border: '#88b890' },
+  '葉瑄': { bg: '#f5eaf8', color: '#8840a8', border: '#c8a0d8' },
+  '其他': { bg: '#eeebea', color: '#6a5a54', border: '#c8b8b2' },
+};
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [tab, setTab] = useState('stamina');
+  const [stamina, setStamina] = useLS('stamina', { current: 60, baseTime: now(), potions: 0, dailyCurrent: {}, checkIn12: false, checkIn18: false, checkInDate: '' });
+  const [events, setEvents] = useLS('events', []);
+  const [gacha, setGacha] = useLS('gacha', []);
+  const [collection, setCollection] = useLS('collection', []);
+  const [pools, setPools] = useLS('pools', []);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const resetCheckInIfNew = () => {
+    const d = today();
+    if (stamina.checkInDate !== d) {
+      setStamina(s => ({ ...s, checkIn12: false, checkIn18: false, checkInDate: d }));
+    }
+  };
+  useEffect(() => { resetCheckInIfNew(); }, []);
+
+  const addToCollection = useCallback((drops, poolName) => {
+    setCollection(prev => {
+      let next = [...prev];
+      drops.forEach(drop => {
+        if (!drop.name) return;
+        const exists = next.find(c => c.name === drop.name && c.character === drop.character);
+        if (exists) {
+          next = next.map(c => c.id === exists.id ? { ...c, duplicates: (c.duplicates || 1) + 1 } : c);
+        } else {
+          next = [...next, { name: drop.name, rarity: drop.rarity, character: drop.character, source: poolName, obtained: today(), id: uid() }];
+        }
+      });
+      return next;
+    });
+  }, [setCollection]);
+
+  const tabs = [
+    { id: 'stamina',    label: '⚡ 體力管理' },
+    { id: 'events',     label: '📋 活動列表' },
+    { id: 'gacha',      label: '✨ 抽卡明細' },
+    { id: 'pools',      label: '🎴 卡池管理' },
+    { id: 'collection', label: '📖 圖鑑' },
+  ];
+
+  const importRef = useRef();
+
+  const exportData = () => {
+    const data = { stamina, events, gacha, collection, pools, exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `繪旅人備份_${today()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const importData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (confirm(`確定匯入備份？\n（${data.exportedAt ? '備份時間：' + data.exportedAt.slice(0,10) : '未知來源'}）\n⚠ 現有資料將被覆蓋`)) {
+          if (data.stamina)    setStamina(data.stamina);
+          if (data.events)     setEvents(data.events);
+          if (data.gacha)      setGacha(data.gacha);
+          if (data.collection) setCollection(data.collection);
+          if (data.pools)      setPools(data.pools);
+          alert('✅ 匯入成功！');
+        }
+      } catch {
+        alert('❌ 檔案格式錯誤，請確認為正確的 JSON 備份檔');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
+  return (
+    <div>
+      <div className="app-header">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="app-title" style={{ marginBottom: 0 }}>
+            ✦ 繪旅人管理工具
+            <span className="sub">時空中的繪旅人 · 全能助手</span>
+          </div>
+          <div style={{ display: 'flex', gap: 6, paddingBottom: 4 }}>
+            <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={importData} />
+            <button className="btn btn-outline btn-xs" style={{ color: 'var(--gold-light)', borderColor: 'rgba(212,175,106,0.4)', fontSize: 11 }} onClick={() => importRef.current.click()}>
+              📥 匯入
+            </button>
+            <button className="btn btn-outline btn-xs" style={{ color: 'var(--gold-light)', borderColor: 'rgba(212,175,106,0.4)', fontSize: 11 }} onClick={exportData}>
+              📤 匯出
+            </button>
+          </div>
+        </div>
+        <div className="tab-bar">
+          {tabs.map(t => (
+            <button key={t.id} className={`tab-btn ${tab===t.id?'active':''}`} onClick={() => setTab(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="main">
+        {tab === 'stamina'    && <StaminaTab stamina={stamina} setStamina={setStamina} tick={tick} />}
+        {tab === 'events'     && <EventsTab events={events} setEvents={setEvents} />}
+        {tab === 'gacha'      && <GachaTab gacha={gacha} setGacha={setGacha} pools={pools} setPools={setPools} addToCollection={addToCollection} />}
+        {tab === 'pools'      && <PoolTab pools={pools} setPools={setPools} />}
+        {tab === 'collection' && <CollectionTab collection={collection} setCollection={setCollection} />}
+      </div>
+    </div>
+  );
+}
+
+// ─── Daily income sources ─────────────────────────────────────────────────────
+const DAILY_SOURCES = [
+  { key: 'srcNatural',   label: '自然回體',    val: 240, note: '6分鐘/1體，24小時上限' },
+  { key: 'srcCheckin12', label: '午餐簽到',     val: 45,  note: '12:00-15:00' },
+  { key: 'srcCheckin18', label: '晚餐簽到',     val: 60,  note: '17:30-21:00' },
+  { key: 'srcDailyTask', label: '每日任務',     val: 100, note: '活躍度達標後領取' },
+  { key: 'srcFriend',    label: '好友互送',     val: 40,  note: '基礎 40' },
+  { key: 'srcFriendMission', label: '互送任務', val: 10,  note: '好友互送任務達成' },
+  { key: 'srcVisit',     label: '出遊拜訪',     val: 8,   note: '隨機回禮平均值' },
+  { key: 'srcGacha',     label: '抽卡任務',     val: 10,  note: '每日進行 1 次繪製' },
+];
+const DAILY_BASE_MAX = 513;
+const EXTRA_SOURCES = [
+  { key: 'srcDiamond', label: '🔷 鑽石體', val: 300, note: '消耗鑽石兌換' },
+  { key: 'srcPack',    label: '📦 每日體包', val: 90,  note: 'NT$19 禮包' },
+];
+
+// ─── STAMINA TAB ─────────────────────────────────────────────────────────────
+function StaminaTab({ stamina, setStamina, tick }) {
+  const current = staminaAtTime(stamina.current, stamina.baseTime);
+  const nextMin = minsUntilNext(stamina.current, stamina.baseTime);
+  const pct = Math.min(100, (current / 240) * 100);
+
+  // Inline stamina editing
+  const [editingStamina, setEditingStamina] = useState(false);
+  const [editVal, setEditVal] = useState('');
+  const staminaInputRef = useRef();
+
+  const startEditStamina = () => {
+    setEditVal(current.toString());
+    setEditingStamina(true);
+    setTimeout(() => staminaInputRef.current?.select(), 30);
+  };
+  const confirmStamina = () => {
+    const v = parseInt(editVal);
+    if (!isNaN(v) && v >= 0) setStamina(s => ({ ...s, current: v, baseTime: now() }));
+    setEditingStamina(false);
+  };
+  const staminaKeyDown = (e) => {
+    if (e.key === 'Enter') confirmStamina();
+    if (e.key === 'Escape') setEditingStamina(false);
+  };
+
+  // Drink count inline editing
+  const [editingDrink, setEditingDrink] = useState(null);
+  const [drinkEditVal, setDrinkEditVal] = useState('');
+  const drinkInputRef = useRef();
+
+  const startEditDrink = (drinkKey) => {
+    setDrinkEditVal(String(stamina[drinkKey] || 0));
+    setEditingDrink(drinkKey);
+    setTimeout(() => drinkInputRef.current?.select(), 30);
+  };
+  const confirmDrink = (drinkKey) => {
+    const newCnt = Math.max(0, parseInt(drinkEditVal) || 0);
+    setStamina(s => ({ ...s, [drinkKey]: newCnt }));
+    setEditingDrink(null);
+  };
+  const drinkKeyDown = (e, drinkKey) => {
+    if (e.key === 'Enter') confirmDrink(drinkKey);
+    if (e.key === 'Escape') setEditingDrink(null);
+  };
+
+  // Toggle daily income source
+  const toggleSrc = (key) => {
+    setStamina(s => ({ ...s, [key]: !s[key] }));
+  };
+
+  // Calc today's confirmed income
+  const confirmedBase = DAILY_SOURCES.filter(s => stamina[s.key]).reduce((sum, s) => sum + s.val, 0);
+  const confirmedExtra = EXTRA_SOURCES.filter(s => stamina[s.key]).reduce((sum, s) => sum + s.val, 0);
+  const confirmedTotal = confirmedBase + confirmedExtra;
+  const drinkTotal = (stamina.drinkAmericano || 0) * 30 + (stamina.drinkLatte || 0) * 60;
+  const todayMax = DAILY_BASE_MAX + confirmedExtra + drinkTotal;
+
+  // Activity gap calc
+  const [actTarget, setActTarget] = useState('');
+  const [actCurrent, setActCurrent] = useState('');
+  const [actDrop, setActDrop] = useState('');
+  const [actCost, setActCost] = useState('');
+  // Stamina gap calc
+  const [gapDays, setGapDays] = useState('');
+  const [gapNeed, setGapNeed] = useState('');
+  // CP calc
+  const [cpPrice, setCpPrice] = useState('');
+  const [cpAmount, setCpAmount] = useState('');
+
+  // Gap calc — use 513/day base
+  const totalSupply = gapDays ? (parseInt(gapDays) * 513) + current + drinkTotal : null;
+  const deficit = totalSupply != null && gapNeed ? totalSupply - parseInt(gapNeed) : null;
+
+  const cpPer = cpPrice && cpAmount ? (parseFloat(cpPrice) / parseInt(cpAmount)).toFixed(4) : null;
+  const cpRecoverHours = cpAmount ? (parseInt(cpAmount) * STAMINA_RATE / 60).toFixed(1) : null;
+
+  // Activity calc
+  const actRuns = actTarget && actCurrent && actDrop && actDrop > 0 ? Math.ceil((actTarget - actCurrent) / actDrop) : null;
+  const actStamina = actRuns != null && actCost ? actRuns * parseInt(actCost) : null;
+
+  const DrinkCounter = ({ drinkKey, amount, emoji, label }) => {
+    const cnt = stamina[drinkKey] || 0;
+    const isEditing = editingDrink === drinkKey;
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: 10, padding: '8px 14px' }}>
+        <span style={{ fontSize: 13 }}>{emoji}</span>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 600 }}>{label}</div>
+          <div style={{ fontSize: 11, color: 'var(--ink-light)' }}>+{amount} 體力/杯</div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="btn btn-outline btn-xs" onClick={() => setStamina(s => ({ ...s, [drinkKey]: Math.max(0, (s[drinkKey]||0) - 1) }))}>−</button>
+          {isEditing ? (
+            <input ref={drinkInputRef} type="number" min="0"
+              value={drinkEditVal}
+              onChange={e => setDrinkEditVal(e.target.value)}
+              onBlur={() => confirmDrink(drinkKey)}
+              onKeyDown={e => drinkKeyDown(e, drinkKey)}
+              style={{ width: 48, textAlign: 'center', fontWeight: 700, fontSize: 14, padding: '2px 4px' }}
+            />
+          ) : (
+            <span title="點擊直接輸入數量" onClick={() => startEditDrink(drinkKey)}
+              style={{ minWidth: 24, textAlign: 'center', fontWeight: 700, fontSize: 14, cursor: 'text', borderBottom: '1px dashed var(--rose-light)', padding: '0 2px' }}>
+              {cnt}
+            </span>
+          )}
+          <button className="btn btn-gold btn-xs" onClick={() => setStamina(s => ({ ...s, [drinkKey]: (s[drinkKey]||0) + 1 }))}>+</button>
+        </div>
+        <span style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 600, marginLeft: 4 }}>={cnt * amount}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {/* Current Stamina */}
+      <div className="card">
+        <div className="card-title"><span className="icon">⚡</span> 當前體力狀態</div>
+        <div className="stats-row">
+          <div className="stat-box" title="點擊直接修改體力值" style={{ cursor: 'pointer' }}
+            onClick={() => !editingStamina && startEditStamina()}>
+            {editingStamina ? (
+              <input ref={staminaInputRef} type="number" min="0" value={editVal}
+                onChange={e => setEditVal(e.target.value)}
+                onBlur={confirmStamina} onKeyDown={staminaKeyDown}
+                onClick={e => e.stopPropagation()}
+                style={{ width: '100%', textAlign: 'center', fontSize: 26, fontWeight: 700, color: 'var(--rose)', fontFamily: 'Cormorant Garamond', background: 'transparent', border: 'none', borderBottom: '2px solid var(--rose)', outline: 'none', padding: 0 }}
+              />
+            ) : (
+              <div className="val" style={{ userSelect: 'none' }}>{current}</div>
+            )}
+            <div className="lbl">當前體力 ✎</div>
+          </div>
+          <div className="stat-box gold">
+            <div className="val">{todayMax}</div>
+            <div className="lbl">今日體力上限</div>
+          </div>
+          <div className="stat-box green">
+            <div className="val">{nextMin != null ? `${nextMin}分` : '已滿'}</div>
+            <div className="lbl">下次恢復</div>
+          </div>
+        </div>
+        <div className="stamina-bar-wrap">
+          <div className="stamina-bar-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--ink-light)' }}>自然體力：{current} / 240　·　點擊數字直接修改</div>
+      </div>
+
+      {/* Daily income sources */}
+      <div className="card">
+        <div className="card-title"><span className="icon">📋</span> 每日體力來源追蹤</div>
+
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ minWidth: 'unset', width: '100%' }}>
+            <thead><tr>
+              <th style={{ width: 28 }}></th>
+              <th>來源</th>
+              <th style={{ textAlign: 'right' }}>體力</th>
+              <th style={{ fontSize: 10, color: 'var(--gold-light)', fontWeight: 400 }}>備註</th>
+            </tr></thead>
+            <tbody>
+              {DAILY_SOURCES.map(src => (
+                <tr key={src.key} style={{ opacity: stamina[src.key] ? 1 : 0.55 }}>
+                  <td>
+                    <input type="checkbox" checked={!!stamina[src.key]} onChange={() => toggleSrc(src.key)}
+                      style={{ width: 15, height: 15, accentColor: 'var(--rose)', cursor: 'pointer' }} />
+                  </td>
+                  <td style={{ fontWeight: stamina[src.key] ? 600 : 400 }}>{src.label}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: stamina[src.key] ? 'var(--rose)' : 'var(--ink-light)' }}>+{src.val}</td>
+                  <td style={{ fontSize: 11, color: 'var(--ink-light)' }}>{src.note}</td>
+                </tr>
+              ))}
+              <tr style={{ borderTop: '2px solid var(--border)', fontWeight: 700 }}>
+                <td colSpan="2" style={{ paddingTop: 8 }}>每日固定小計</td>
+                <td style={{ textAlign: 'right', color: 'var(--rose)', paddingTop: 8 }}>{confirmedBase} / {DAILY_BASE_MAX}</td>
+                <td></td>
+              </tr>
+              <tr><td colSpan="4" style={{ padding: '4px 0' }}></td></tr>
+              {EXTRA_SOURCES.map(src => (
+                <tr key={src.key} style={{ opacity: stamina[src.key] ? 1 : 0.55 }}>
+                  <td>
+                    <input type="checkbox" checked={!!stamina[src.key]} onChange={() => toggleSrc(src.key)}
+                      style={{ width: 15, height: 15, accentColor: 'var(--gold)', cursor: 'pointer' }} />
+                  </td>
+                  <td style={{ fontWeight: stamina[src.key] ? 600 : 400 }}>{src.label}</td>
+                  <td style={{ textAlign: 'right', fontWeight: 700, color: stamina[src.key] ? 'var(--gold)' : 'var(--ink-light)' }}>+{src.val}</td>
+                  <td style={{ fontSize: 11, color: 'var(--ink-light)' }}>{src.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div style={{ marginTop: 12, background: 'var(--rose-pale)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: 'var(--ink-mid)', fontWeight: 500 }}>今日已確認來源合計</span>
+          <span style={{ fontFamily: 'Cormorant Garamond', fontSize: 22, fontWeight: 700, color: 'var(--rose)' }}>{confirmedTotal} 體</span>
+        </div>
+
+        <div className="divider" />
+        <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 500, color: 'var(--ink-mid)' }}>☕ 飲品存量</div>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <DrinkCounter drinkKey="drinkAmericano" amount={30} emoji="🧊" label="冰美式" />
+          <DrinkCounter drinkKey="drinkLatte" amount={60} emoji="☕" label="香濃拿鐵" />
+        </div>
+        {drinkTotal > 0 && (
+          <div style={{ marginTop: 10, fontSize: 12, color: 'var(--gold)', fontWeight: 600 }}>
+            ☕ 飲品體力合計：+{drinkTotal} 體
+          </div>
+        )}
+      </div>
+
+      {/* Activity gap */}
+      <div className="card">
+        <div className="card-title"><span className="icon">🎯</span> 活動缺口計算</div>
+        <div className="form-row col2">
+          <div className="form-group"><label>目標數量</label><input type="number" value={actTarget} onChange={e=>setActTarget(e.target.value)} placeholder="e.g. 500" /></div>
+          <div className="form-group"><label>當前數量</label><input type="number" value={actCurrent} onChange={e=>setActCurrent(e.target.value)} placeholder="e.g. 120" /></div>
+          <div className="form-group"><label>單場掉落數</label><input type="number" value={actDrop} onChange={e=>setActDrop(e.target.value)} placeholder="e.g. 8" /></div>
+          <div className="form-group"><label>單場體力消耗</label><input type="number" value={actCost} onChange={e=>setActCost(e.target.value)} placeholder="e.g. 10" /></div>
+        </div>
+        {actRuns != null && (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <div className="stat-box"><div className="val">{fmt(actRuns)}</div><div className="lbl">所需場次</div></div>
+            <div className="stat-box gold"><div className="val">{actStamina != null ? fmt(actStamina) : '—'}</div><div className="lbl">所需體力</div></div>
+          </div>
+        )}
+      </div>
+
+      {/* Stamina gap */}
+      <div className="card">
+        <div className="card-title"><span className="icon">📊</span> 體力缺口判定</div>
+        <div style={{ fontSize: 11, color: 'var(--ink-light)', marginBottom: 10 }}>每日保底供應以 513 體計算（不含道具與鑽石）</div>
+        <div className="form-row col2">
+          <div className="form-group"><label>剩餘天數</label><input type="number" value={gapDays} onChange={e=>setGapDays(e.target.value)} placeholder="e.g. 14" /></div>
+          <div className="form-group"><label>所需總體力</label><input type="number" value={gapNeed} onChange={e=>setGapNeed(e.target.value)} placeholder="來自上方計算" /></div>
+        </div>
+        {totalSupply != null && (
+          <div>
+            <div className="stats-row" style={{ marginBottom: 10 }}>
+              <div className="stat-box"><div className="val">{fmt(parseInt(gapDays||0)*513)}</div><div className="lbl">每日保底供應</div></div>
+              <div className="stat-box"><div className="val">{fmt(current)}</div><div className="lbl">當前存量</div></div>
+              <div className="stat-box gold"><div className="val">{fmt(drinkTotal)}</div><div className="lbl">飲品存量</div></div>
+            </div>
+            {deficit != null && (
+              <div className={deficit >= 0 ? 'result-surplus' : 'result-deficit'}>
+                {deficit >= 0
+                  ? `✓ 體力充足，預計剩餘 ${fmt(deficit)} 體（無需課金）`
+                  : `⚠ 體力缺口 ${fmt(Math.abs(deficit))} 體，需補充飲品或課金`}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* CP calc */}
+      <div className="card">
+        <div className="card-title"><span className="icon">💰</span> 禮包 CP 值計算</div>
+        <div className="form-row col2">
+          <div className="form-group"><label>禮包價格（台幣）</label><input type="number" value={cpPrice} onChange={e=>setCpPrice(e.target.value)} placeholder="e.g. 19" /></div>
+          <div className="form-group"><label>獲得體力數量</label><input type="number" value={cpAmount} onChange={e=>setCpAmount(e.target.value)} placeholder="e.g. 90" /></div>
+        </div>
+        {cpPer && (
+          <div className="stats-row">
+            <div className="stat-box gold"><div className="val">{cpPer}</div><div className="lbl">元/體力</div></div>
+            <div className="stat-box"><div className="val">{cpRecoverHours}h</div><div className="lbl">等效自然回復</div></div>
+            <div className="stat-box green"><div className="val">{cpAmount ? (parseFloat(cpPrice)/parseInt(cpAmount)*513).toFixed(1) : '—'}</div><div className="lbl">等效每日體包費(元)</div></div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── EVENTS TAB ──────────────────────────────────────────────────────────────
+function EventsTab({ events, setEvents }) {
+  const [modal, setModal] = useState(null);
+  const [filter, setFilter] = useState('all');
+  const [sortKey, setSortKey] = useState('cnYear');
+  const [sortDir, setSortDir] = useState('asc');
+
+  const totalNotebooks = events.filter(e => e.completion === '未完成').reduce((s, e) => s + (parseInt(e.notebooks)||0), 0);
+  const statusCounts = COMPLETION_OPTIONS.reduce((a, k) => { a[k] = events.filter(e => e.completion === k).length; return a; }, {});
+
+  const handleSort = (key) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+  };
+  const resetSort = () => { setSortKey('cnYear'); setSortDir('asc'); };
+
+  const sortFn = (a, b) => {
+    let va = a[sortKey] ?? '', vb = b[sortKey] ?? '';
+    if (['cnYear','sn','notebooks'].includes(sortKey)) { va = parseInt(va)||0; vb = parseInt(vb)||0; }
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  };
+
+  const filtered = (filter === 'all' ? events : events.filter(e => e.completion === filter)).slice().sort(sortFn);
+
+  const saveEvent = (ev) => {
+    if (ev.id) setEvents(prev => prev.map(e => e.id === ev.id ? ev : e));
+    else setEvents(prev => [...prev, { ...ev, id: uid() }]);
+    setModal(null);
+  };
+  const delEvent = (id) => { if (confirm('確定刪除此活動？')) setEvents(prev => prev.filter(e => e.id !== id)); };
+
+  const SortTh = ({ k, label }) => {
+    const active = sortKey === k;
+    return (
+      <th style={{ cursor: 'pointer', userSelect: 'none', color: active ? '#ffd080' : 'var(--gold-light)', transition: 'color 0.15s' }}
+          onClick={() => handleSort(k)}>
+        {label} {active ? (sortDir === 'asc' ? '▲' : '▼') : '⇅'}
+      </th>
+    );
+  };
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+          <div className="card-title" style={{ marginBottom: 0 }}><span className="icon">📋</span> 活動列表管理</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-outline btn-sm" onClick={resetSort}>↺ 預設排序</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setModal({})}>+ 新增活動</button>
+          </div>
+        </div>
+        <div className="stats-row" style={{ marginBottom: 12 }}>
+          {COMPLETION_OPTIONS.map(k => (
+            <div key={k} className="stat-box" style={{ cursor: 'pointer', outline: filter===k ? '2px solid var(--rose)' : 'none' }} onClick={() => setFilter(f => f===k?'all':k)}>
+              <div className="val">{statusCounts[k]}</div><div className="lbl">{k}</div>
+            </div>
+          ))}
+          <div className="stat-box gold"><div className="val">{totalNotebooks}</div><div className="lbl">手札缺口合計</div></div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <button className={`btn btn-xs ${filter==='all'?'btn-primary':'btn-outline'}`} onClick={() => setFilter('all')}>全部 ({events.length})</button>
+          {COMPLETION_OPTIONS.map(k => (
+            <button key={k} className={`btn btn-xs ${filter===k?'btn-primary':'btn-outline'}`} onClick={() => setFilter(f => f===k?'all':k)}>{k}</button>
+          ))}
+        </div>
+        {filtered.length === 0 ? (
+          <div className="empty"><div className="icon">📭</div><div>尚無活動資料</div></div>
+        ) : (
+          <div className="tbl-wrap">
+            <table>
+              <thead><tr>
+                <SortTh k="sn" label="序號" />
+                <SortTh k="name" label="活動名稱" />
+                <SortTh k="cnYear" label="陸服年份" />
+                <SortTh k="cnStart" label="陸服期間" />
+                <SortTh k="twStatus" label="台服狀態" />
+                <th>台服期間</th>
+                <SortTh k="notebooks" label="手札" />
+                <SortTh k="completion" label="完成狀態" />
+                <th>劇情</th><th>卡面</th><th>備註</th><th></th>
+              </tr></thead>
+              <tbody>
+                {filtered.map((ev, i) => (
+                  <tr key={ev.id} className={ev.completion !== '未完成' ? 'done' : ''}>
+                    <td style={{ color: 'var(--ink-light)' }}>{ev.sn || i+1}</td>
+                    <td style={{ fontWeight: 500, maxWidth: 140 }}>{ev.name}</td>
+                    <td>{ev.cnYear}</td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: 11 }}>{ev.cnStart && ev.cnEnd ? `${fmtDate(ev.cnStart)}～${fmtDate(ev.cnEnd)}` : '—'}</td>
+                    <td><StatusBadge s={ev.twStatus} /></td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: 11 }}>{ev.twStart && ev.twEnd ? `${fmtDate(ev.twStart)}～${fmtDate(ev.twEnd)}` : '—'}</td>
+                    <td style={{ textAlign: 'center' }}>{ev.notebooks ? <span className="badge badge-rose">×{ev.notebooks}</span> : '—'}</td>
+                    <td><CompletionBadge c={ev.completion} /></td>
+                    <td>{ev.readStory ? '✓' : ''}</td>
+                    <td>{ev.readCard ? '✓' : ''}</td>
+                    <td style={{ maxWidth: 100, fontSize: 11, color: 'var(--ink-light)' }}>{ev.notes}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button className="btn btn-outline btn-xs" onClick={() => setModal({...ev})}>編輯</button>
+                        <button className="btn btn-danger btn-xs" onClick={() => delEvent(ev.id)}>×</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+      {modal !== null && <EventModal event={modal} onSave={saveEvent} onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+function StatusBadge({ s }) {
+  const map = { '未上': 'badge-gray', '已上': 'badge-sage', '已復刻': 'badge-rose' };
+  return <span className={`badge ${map[s]||'badge-gray'}`}>{s||'未上'}</span>;
+}
+function CompletionBadge({ c }) {
+  const map = { '未完成': 'badge-gray', '當代完成': 'badge-sage', '復刻完成': 'badge-blue', '手札開啟完成': 'badge-purple' };
+  return <span className={`badge ${map[c]||'badge-gray'}`}>{c||'未完成'}</span>;
+}
+
+function EventModal({ event, onSave, onClose }) {
+  const [form, setForm] = useState({
+    sn: '', name: '', cnYear: '', cnStart: '', cnEnd: '',
+    twStatus: '未上', twStart: '', twEnd: '', replicaCount: '',
+    notebooks: '', completion: '未完成',
+    readStory: false, readCard: false, unlockTime: '', notes: '',
+    ...event
+  });
+  const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-title">{form.id ? '✎ 編輯活動' : '+ 新增活動'}</div>
+        <div className="form-row col2">
+          <div className="form-group"><label>序號 (SN)</label><input value={form.sn} onChange={e=>f('sn',e.target.value)} /></div>
+          <div className="form-group"><label>活動名稱 *</label><input value={form.name} onChange={e=>f('name',e.target.value)} /></div>
+        </div>
+        <div className="form-row col3">
+          <div className="form-group"><label>陸服推出年份</label><input value={form.cnYear} onChange={e=>f('cnYear',e.target.value)} placeholder="e.g. 2022" /></div>
+          <div className="form-group"><label>陸服開始日</label><input type="date" value={form.cnStart} onChange={e=>f('cnStart',e.target.value)} /></div>
+          <div className="form-group"><label>陸服結束日</label><input type="date" value={form.cnEnd} onChange={e=>f('cnEnd',e.target.value)} /></div>
+        </div>
+        <div className="form-row col3">
+          <div className="form-group"><label>台服狀態</label><select value={form.twStatus} onChange={e=>f('twStatus',e.target.value)}>{SERVER_STATUS.map(s=><option key={s}>{s}</option>)}</select></div>
+          <div className="form-group"><label>台服開始日</label><input type="date" value={form.twStart} onChange={e=>f('twStart',e.target.value)} /></div>
+          <div className="form-group"><label>台服結束日</label><input type="date" value={form.twEnd} onChange={e=>f('twEnd',e.target.value)} /></div>
+        </div>
+        <div className="form-row col2">
+          <div className="form-group"><label>復刻次數</label><input type="number" value={form.replicaCount} onChange={e=>f('replicaCount',e.target.value)} min="0" /></div>
+          <div className="form-group"><label>手札需求（開啟所需）</label><input type="number" value={form.notebooks} onChange={e=>f('notebooks',e.target.value)} min="0" /></div>
+        </div>
+        <div className="form-row col2">
+          <div className="form-group"><label>完成狀態</label><select value={form.completion} onChange={e=>f('completion',e.target.value)}>{COMPLETION_OPTIONS.map(s=><option key={s}>{s}</option>)}</select></div>
+          <div className="form-group"><label>解鎖時間</label><input value={form.unlockTime} onChange={e=>f('unlockTime',e.target.value)} placeholder="e.g. 2024/03/15" /></div>
+        </div>
+        <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
+          <label className="check-wrap"><input type="checkbox" checked={form.readStory} onChange={e=>f('readStory',e.target.checked)} /> 活動劇情已閱讀</label>
+          <label className="check-wrap"><input type="checkbox" checked={form.readCard} onChange={e=>f('readCard',e.target.checked)} /> 卡面已閱讀</label>
+        </div>
+        <div className="form-group"><label>備註</label><textarea value={form.notes} onChange={e=>f('notes',e.target.value)} /></div>
+        <div className="modal-footer">
+          <button className="btn btn-outline" onClick={onClose}>取消</button>
+          <button className="btn btn-primary" onClick={() => form.name && onSave(form)}>儲存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GACHA TAB ───────────────────────────────────────────────────────────────
+function GachaTab({ gacha, setGacha, pools, setPools, addToCollection }) {
+  const [modal, setModal] = useState(false);
+  const [editingId, setEditingId] = useState(null); // null = new record
+  const [form, setForm] = useState({ date: today(), poolId: '', pulls: '10', drops: [], image: null });
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [quickPool, setQuickPool] = useState({ show: false, name: '' });
+  const fileRef = useRef();
+
+  const quickCreatePool = () => {
+    const name = quickPool.name.trim();
+    if (!name) return;
+    const newPool = { id: uid(), name, upCards: [], startDate: '', endDate: '', notes: '' };
+    setPools(prev => [...prev, newPool]);
+    setForm(p => ({ ...p, poolId: newPool.id }));
+    setQuickPool({ show: false, name: '' });
+  };
+
+  const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const selectedPool = pools.find(p => p.id === form.poolId);
+
+  const addDrop = () => setForm(p => ({ ...p, drops: [...p.drops, { name: '', rarity: 'SSR', character: '其他' }] }));
+  const updateDrop = (i, k, v) => setForm(p => {
+    const drops = [...p.drops];
+    drops[i] = { ...drops[i], [k]: v };
+    return { ...p, drops };
+  });
+  const removeDrop = (i) => setForm(p => ({ ...p, drops: p.drops.filter((_, idx) => idx !== i) }));
+
+  const openNew = () => {
+    setEditingId(null);
+    setQuickPool({ show: false, name: '' });
+    setForm({ date: today(), poolId: pools.length > 0 ? pools[0].id : '', pulls: '10', drops: [], image: null });
+    setModal(true);
+  };
+
+  const openEdit = (g) => {
+    setEditingId(g.id);
+    // normalise legacy single-drop format
+    const drops = g.drops || (g.drop ? [{ name: g.drop, rarity: g.rarity, character: g.character || '其他' }] : []);
+    setForm({ date: g.date || today(), poolId: g.poolId || '', pulls: String(g.pulls || '10'), drops, image: null });
+    setModal(true);
+  };
+
+  const save = () => {
+    const poolName = selectedPool?.name || '';
+    if (editingId) {
+      // Edit existing
+      const record = { ...form, id: editingId, pulls: parseInt(form.pulls), image: null };
+      setGacha(prev => prev.map(g => g.id === editingId ? record : g));
+    } else {
+      // New record
+      const record = { ...form, id: uid(), pulls: parseInt(form.pulls), image: null };
+      setGacha(prev => [record, ...prev]);
+    }
+    const dropsToSync = form.drops.filter(d => d.name);
+    if (dropsToSync.length > 0) addToCollection(dropsToSync, poolName);
+    setModal(false);
+  };
+
+  const delEntry = (id) => { if (confirm('確定刪除？')) setGacha(prev => prev.filter(g => g.id !== id)); };
+
+  const getPoolName = (g) => {
+    if (g.poolId) return pools.find(p => p.id === g.poolId)?.name || g.pool || '—';
+    return g.pool || '—';
+  };
+  const getPoolUpCards = (g) => {
+    if (g.poolId) return pools.find(p => p.id === g.poolId)?.upCards || [];
+    return [];
+  };
+
+  // AI 截圖識別（含日期）
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      const b64 = ev.target.result.split(',')[1];
+      const mediaType = file.type || 'image/jpeg';
+      f('image', ev.target.result);
+      setOcrLoading(true);
+      try {
+        const resp = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            messages: [{
+              role: 'user',
+              content: [
+                { type: 'image', source: { type: 'base64', media_type: mediaType, data: b64 } },
+                { type: 'text', text: `請分析這張繪旅人抽卡截圖，提取以下資訊。
+回傳純JSON，不加任何markdown或反引號：
+{
+  "date": "截圖中可見的日期，格式YYYY-MM-DD，若看不到則回傳null",
+  "drops": [
+    {"name":"卡面完整名稱","rarity":"SSR或SR","character":"從艾因/路辰/羅夏/司嵐/葉瑄/其他中選最接近的"}
+  ]
+}
+若截圖中無SSR/SR出貨，drops回傳空陣列[]。` }
+              ]
+            }]
+          })
+        });
+        const data = await resp.json();
+        const text = (data.content || []).map(c => c.text || '').join('');
+        const clean = text.replace(/```json|```/g, '').trim();
+        const parsed = JSON.parse(clean);
+        setForm(p => ({
+          ...p,
+          drops: (parsed.drops || []).map(d => ({ name: d.name || '', rarity: d.rarity || 'SSR', character: d.character || '其他' })),
+          date: parsed.date || p.date,
+        }));
+        if (!parsed.drops || parsed.drops.length === 0) alert('截圖中未偵測到 SSR/SR 出貨，日期資訊已更新（若有）');
+      } catch (err) {
+        console.error('OCR error', err);
+        alert('圖片識別失敗，請手動填寫');
+      } finally {
+        setOcrLoading(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Stats
+  const totalPulls = gacha.reduce((s, g) => s + (parseInt(g.pulls) || 0), 0);
+  const allDrops = gacha.flatMap(g => g.drops || (g.drop ? [{ name: g.drop, rarity: g.rarity }] : []));
+  const ssrCount = allDrops.filter(d => d.rarity === 'SSR').length;
+  const srCount = allDrops.filter(d => d.rarity === 'SR').length;
+  const ssrRate = totalPulls > 0 ? ((ssrCount / totalPulls) * 100).toFixed(2) : '—';
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 10 }}>
+          <div className="card-title" style={{ marginBottom: 0 }}><span className="icon">✨</span> 抽卡明細</div>
+          <button className="btn btn-primary btn-sm" onClick={openNew}>+ 新增紀錄</button>
+        </div>
+        <div className="stats-row" style={{ marginBottom: 0 }}>
+          <div className="stat-box"><div className="val">{fmt(totalPulls)}</div><div className="lbl">累計抽數</div></div>
+          <div className="stat-box gold"><div className="val">{ssrCount}</div><div className="lbl">SSR 出貨</div></div>
+          <div className="stat-box"><div className="val">{srCount}</div><div className="lbl">SR 出貨</div></div>
+          <div className="stat-box green"><div className="val">{ssrRate}%</div><div className="lbl">SSR 出率</div></div>
+        </div>
+      </div>
+
+      <div className="card">
+        {gacha.length === 0 ? (
+          <div className="empty"><div className="icon">🎴</div><div>尚無抽卡紀錄</div></div>
+        ) : (
+          <div className="tbl-wrap">
+            <table>
+              <thead><tr>
+                <th>日期</th><th>卡池</th><th>抽數</th><th>池內 UP 卡</th><th>出貨紀錄</th><th></th>
+              </tr></thead>
+              <tbody>
+                {gacha.map(g => {
+                  const upCards = getPoolUpCards(g);
+                  const drops = g.drops || (g.drop ? [{ name: g.drop, rarity: g.rarity, character: g.character }] : []);
+                  return (
+                    <tr key={g.id}>
+                      <td style={{ whiteSpace: 'nowrap', fontSize: 11 }}>{fmtDate(g.date)}</td>
+                      <td style={{ fontWeight: 500, maxWidth: 140 }}>{getPoolName(g)}</td>
+                      <td style={{ textAlign: 'center' }}>{g.pulls}抽</td>
+                      <td style={{ fontSize: 11 }}>
+                        {upCards.length > 0
+                          ? upCards.map((c, i) => <div key={i}><span className={`tag tag-${(c.rarity||'ssr').toLowerCase()}`}>{c.rarity}</span> <span style={{color:'var(--ink-mid)'}}>{c.name}</span></div>)
+                          : <span style={{ color: 'var(--ink-light)' }}>—</span>}
+                      </td>
+                      <td>
+                        {drops.length === 0
+                          ? <span style={{ color: 'var(--ink-light)', fontSize: 11 }}>無出貨</span>
+                          : drops.map((d, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                              <span className={`tag tag-${(d.rarity||'ssr').toLowerCase()}`}>{d.rarity}</span>
+                              <span style={{ fontWeight: 500, fontSize: 12 }}>{d.name}</span>
+                              <span style={{ fontSize: 11, color: 'var(--ink-light)' }}>{d.character}</span>
+                            </div>
+                          ))
+                        }
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button className="btn btn-outline btn-xs" onClick={() => openEdit(g)}>編輯</button>
+                          <button className="btn btn-danger btn-xs" onClick={() => delEntry(g.id)}>×</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <div className="modal-overlay" onClick={() => setModal(false)}>
+          <div className="modal" style={{ maxWidth: 640 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-title">{editingId ? '✎ 編輯抽卡紀錄' : '✨ 新增抽卡紀錄'}</div>
+
+            {/* AI 截圖識別 */}
+            <div style={{ background: 'var(--rose-pale)', borderRadius: 10, padding: '12px 14px', marginBottom: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-mid)' }}>📷 截圖自動識別（選用）</div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-light)' }}>上傳抽卡結果截圖，AI 自動辨識日期與出貨卡片</div>
+                </div>
+                <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} />
+                <button className="btn btn-outline btn-sm" onClick={() => fileRef.current.click()} disabled={ocrLoading}>
+                  {ocrLoading ? '⏳ 識別中...' : '📷 上傳截圖'}
+                </button>
+              </div>
+              {form.image && <img src={form.image} alt="截圖預覽" style={{ width: '100%', borderRadius: 8, maxHeight: 180, objectFit: 'contain', background: '#f0f0f0', marginTop: 8 }} />}
+            </div>
+
+            <div className="form-row col3">
+              <div className="form-group">
+                <label>抽卡日期</label>
+                <input type="date" value={form.date} onChange={e => f('date', e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>卡池名稱 *</label>
+                {quickPool.show ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <input
+                      value={quickPool.name} autoFocus
+                      onChange={e => setQuickPool(p => ({ ...p, name: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') quickCreatePool(); if (e.key === 'Escape') setQuickPool({ show: false, name: '' }); }}
+                      placeholder="輸入新卡池名稱" style={{ flex: 1 }}
+                    />
+                    <button className="btn btn-primary btn-xs" onClick={quickCreatePool}>✓</button>
+                    <button className="btn btn-outline btn-xs" onClick={() => setQuickPool({ show: false, name: '' })}>✕</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {pools.length > 0 ? (
+                      <select value={form.poolId} onChange={e => f('poolId', e.target.value)} style={{ flex: 1 }}>
+                        {pools.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    ) : (
+                      <div style={{ flex: 1, fontSize: 11, color: 'var(--rose)', padding: '9px 12px', background: 'var(--rose-pale)', borderRadius: 8 }}>
+                        請先新增卡池 →
+                      </div>
+                    )}
+                    <button className="btn btn-gold btn-xs" title="快速新增卡池" onClick={() => setQuickPool({ show: true, name: '' })}>+池</button>
+                  </div>
+                )}
+              </div>
+              <div className="form-group">
+                <label>本次抽數</label>
+                <select value={form.pulls} onChange={e => f('pulls', e.target.value)}>
+                  <option value="1">單抽 (1)</option>
+                  <option value="10">十連 (10)</option>
+                </select>
+              </div>
+            </div>
+
+            {selectedPool?.upCards?.length > 0 && (
+              <div style={{ background: '#e8f4ff', border: '1px solid #a0c8f0', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#2a5080' }}>
+                🎯 本池 UP 卡：{selectedPool.upCards.map(c => `${c.name}（${c.rarity}）`).join('、')}
+              </div>
+            )}
+
+            <div className="divider" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-mid)' }}>出貨紀錄（SSR / SR）</div>
+              <button className="btn btn-outline btn-xs" onClick={addDrop}>+ 新增出貨</button>
+            </div>
+
+            {form.drops.length === 0 && (
+              <div style={{ fontSize: 12, color: 'var(--ink-light)', textAlign: 'center', padding: '14px', background: 'var(--cream)', borderRadius: 8, marginBottom: 8 }}>
+                本次無出貨，或點「+ 新增出貨」手動填入
+              </div>
+            )}
+
+            {form.drops.map((d, i) => (
+              <div key={i} style={{ background: 'var(--cream)', borderRadius: 10, padding: '12px', marginBottom: 8, border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--rose)' }}>✦ 出貨 #{i + 1}</div>
+                  <button className="btn btn-danger btn-xs" onClick={() => removeDrop(i)}>× 移除</button>
+                </div>
+                <div className="form-group" style={{ marginBottom: 8 }}>
+                  <label>卡面名稱</label>
+                  <input value={d.name} onChange={e => updateDrop(i, 'name', e.target.value)} placeholder="e.g. 艾因·星野旅途" />
+                </div>
+                <div className="form-row col2">
+                  <div className="form-group">
+                    <label>稀有度</label>
+                    <select value={d.rarity} onChange={e => updateDrop(i, 'rarity', e.target.value)}>
+                      {RARITIES.map(r => <option key={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>角色</label>
+                    <select value={d.character} onChange={e => updateDrop(i, 'character', e.target.value)}>
+                      {CHARACTERS.map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" onClick={() => setModal(false)}>取消</button>
+              <button className="btn btn-primary" onClick={save}>{editingId ? '儲存修改' : '儲存並同步圖鑑'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── POOL TAB ─────────────────────────────────────────────────────────────────
+function PoolTab({ pools, setPools }) {
+  const [modal, setModal] = useState(null);
+  const [batchModal, setBatchModal] = useState(false);
+  const importRef = useRef();
+
+  const save = (pool) => {
+    if (pool.id) setPools(prev => prev.map(p => p.id === pool.id ? pool : p));
+    else setPools(prev => [...prev, { ...pool, id: uid() }]);
+    setModal(null);
+  };
+  const del = (id) => { if (confirm('確定刪除此卡池？')) setPools(prev => prev.filter(p => p.id !== id)); };
+
+  const downloadTemplate = () => {
+    const tmpl = [
+      { name: '卡池名稱範例', startDate: '2024-01-01', endDate: '2024-01-15', notes: '備註說明', upCards: [
+        { name: 'UP卡面名稱', rarity: 'SSR', character: '艾因' },
+        { name: 'SR卡面名稱', rarity: 'SR',  character: '其他' }
+      ]},
+    ];
+    const blob = new Blob([JSON.stringify(tmpl, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = '卡池批次匯入模板.json'; a.click();
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const arr = JSON.parse(ev.target.result);
+        if (!Array.isArray(arr)) throw new Error('格式錯誤');
+        const newPools = arr.map(p => ({ ...p, id: uid(), upCards: p.upCards || [] }));
+        if (confirm(`確定批次匯入 ${newPools.length} 個卡池？（將新增至現有列表）`)) {
+          setPools(prev => [...prev, ...newPools]);
+          alert(`✅ 成功匯入 ${newPools.length} 個卡池`);
+        }
+      } catch { alert('❌ 檔案格式有誤，請使用模板'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  };
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <div className="card-title" style={{ marginBottom: 0 }}><span className="icon">🎴</span> 卡池管理</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button className="btn btn-outline btn-sm" onClick={downloadTemplate}>📄 下載模板</button>
+            <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+            <button className="btn btn-outline btn-sm" onClick={() => importRef.current.click()}>📥 批次匯入</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setModal({})}>+ 新增卡池</button>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--ink-light)', marginBottom: 14 }}>
+          在此維護卡池及每池的 UP 卡片，抽卡紀錄的卡池與 UP 卡將自動對應。
+        </div>
+        {pools.length === 0 ? (
+          <div className="empty"><div className="icon">🎴</div><div>尚無卡池資料，請新增或批次匯入</div></div>
+        ) : (
+          <div style={{ display: 'grid', gap: 10 }}>
+            {pools.map(p => (
+              <div key={p.id} style={{ background: 'var(--cream)', border: '1px solid var(--border)', borderRadius: 10, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>{p.name}</div>
+                    {(p.startDate || p.endDate) && (
+                      <div style={{ fontSize: 11, color: 'var(--ink-light)', marginBottom: 8 }}>
+                        📅 {fmtDate(p.startDate)} ～ {fmtDate(p.endDate)}
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span style={{ fontSize: 11, color: 'var(--ink-light)' }}>UP：</span>
+                      {(p.upCards || []).length > 0
+                        ? (p.upCards).map((c, i) => (
+                          <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, background: CHAR_COLORS[c.character]?.bg || '#eee', border: `1px solid ${CHAR_COLORS[c.character]?.border || '#ccc'}`, borderRadius: 20, padding: '2px 10px', fontSize: 11 }}>
+                            <span className={`tag tag-${(c.rarity||'ssr').toLowerCase()}`}>{c.rarity}</span>
+                            <span style={{ color: CHAR_COLORS[c.character]?.color }}>{c.name}</span>
+                          </span>
+                        ))
+                        : <span style={{ fontSize: 11, color: 'var(--ink-light)' }}>（未設定）</span>}
+                    </div>
+                    {p.notes && <div style={{ fontSize: 11, color: 'var(--ink-light)', marginTop: 8 }}>📝 {p.notes}</div>}
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, marginLeft: 12 }}>
+                    <button className="btn btn-outline btn-xs" onClick={() => setModal({ ...p })}>編輯</button>
+                    <button className="btn btn-danger btn-xs" onClick={() => del(p.id)}>×</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      {modal !== null && <PoolModal pool={modal} onSave={save} onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+function PoolModal({ pool, onSave, onClose }) {
+  const [form, setForm] = useState({ name: '', startDate: '', endDate: '', notes: '', upCards: [], ...pool });
+  const f = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const addUpCard = () => setForm(p => ({ ...p, upCards: [...(p.upCards || []), { name: '', rarity: 'SSR', character: '其他' }] }));
+  const updateUpCard = (i, k, v) => setForm(p => {
+    const cards = [...(p.upCards || [])];
+    cards[i] = { ...cards[i], [k]: v };
+    return { ...p, upCards: cards };
+  });
+  const removeUpCard = (i) => setForm(p => ({ ...p, upCards: (p.upCards || []).filter((_, idx) => idx !== i) }));
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-title">{form.id ? '✎ 編輯卡池' : '🎴 新增卡池'}</div>
+        <div className="form-group" style={{ marginBottom: 12 }}>
+          <label>卡池名稱 *</label>
+          <input value={form.name} onChange={e => f('name', e.target.value)} placeholder="e.g. 艾因·旅途限定" />
+        </div>
+        <div className="form-row col2">
+          <div className="form-group"><label>開始日期</label><input type="date" value={form.startDate} onChange={e => f('startDate', e.target.value)} /></div>
+          <div className="form-group"><label>結束日期</label><input type="date" value={form.endDate} onChange={e => f('endDate', e.target.value)} /></div>
+        </div>
+        <div className="divider" />
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-mid)' }}>✦ UP 卡片設定</div>
+          <button className="btn btn-outline btn-xs" onClick={addUpCard}>+ 新增 UP 卡</button>
+        </div>
+        {(form.upCards || []).length === 0 && (
+          <div style={{ fontSize: 11, color: 'var(--ink-light)', marginBottom: 12, textAlign: 'center', padding: '10px', background: 'var(--cream)', borderRadius: 8 }}>
+            尚未設定 UP 卡片
+          </div>
+        )}
+        {(form.upCards || []).map((c, i) => (
+          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 72px 80px 32px', gap: 8, alignItems: 'end', marginBottom: 8 }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              {i === 0 && <label>卡面名稱</label>}
+              <input value={c.name} onChange={e => updateUpCard(i, 'name', e.target.value)} placeholder="e.g. 艾因·星野旅途" />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              {i === 0 && <label>稀有度</label>}
+              <select value={c.rarity} onChange={e => updateUpCard(i, 'rarity', e.target.value)}>
+                {RARITIES.map(r => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              {i === 0 && <label>角色</label>}
+              <select value={c.character} onChange={e => updateUpCard(i, 'character', e.target.value)}>
+                {CHARACTERS.map(ch => <option key={ch}>{ch}</option>)}
+              </select>
+            </div>
+            <button className="btn btn-danger btn-xs" style={{ alignSelf: 'flex-end' }} onClick={() => removeUpCard(i)}>×</button>
+          </div>
+        ))}
+        <div className="divider" />
+        <div className="form-group"><label>備註</label><input value={form.notes} onChange={e => f('notes', e.target.value)} placeholder="復刻次數、特殊說明..." /></div>
+        <div className="modal-footer">
+          <button className="btn btn-outline" onClick={onClose}>取消</button>
+          <button className="btn btn-primary" onClick={() => form.name && onSave(form)}>儲存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── COLLECTION TAB ──────────────────────────────────────────────────────────
+function CollectionTab({ collection, setCollection }) {
+  const [char, setChar] = useState('全部');
+  const [modal, setModal] = useState(null);
+  const importRef = useRef();
+
+  const displayed = char === '全部' ? collection : collection.filter(c => c.character === char);
+  const ssrCount = displayed.filter(c => c.rarity === 'SSR').length;
+  const srCount = displayed.filter(c => c.rarity === 'SR').length;
+
+  const save = (card) => {
+    if (card.id) setCollection(prev => prev.map(c => c.id === card.id ? card : c));
+    else setCollection(prev => [...prev, { ...card, id: uid(), obtained: card.obtained || today() }]);
+    setModal(null);
+  };
+  const del = id => { if (confirm('確定刪除？')) setCollection(prev => prev.filter(c => c.id !== id)); };
+
+  const downloadTemplate = () => {
+    const tmpl = [
+      { name: '卡面名稱範例', rarity: 'SSR', character: '艾因', source: '限定卡池', obtained: '2024-01-01', duplicates: 1 },
+      { name: 'SR範例', rarity: 'SR', character: '路辰', source: '常駐', obtained: '2024-01-05', duplicates: 1 },
+    ];
+    const blob = new Blob([JSON.stringify(tmpl, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    a.download = '圖鑑批次匯入模板.json'; a.click();
+  };
+
+  const handleImport = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const arr = JSON.parse(ev.target.result);
+        if (!Array.isArray(arr)) throw new Error('格式錯誤');
+        const newCards = arr.map(c => ({ ...c, id: uid(), obtained: c.obtained || today(), duplicates: c.duplicates || 1 }));
+        if (confirm(`確定批次匯入 ${newCards.length} 張卡片？（將新增至現有圖鑑）`)) {
+          setCollection(prev => [...prev, ...newCards]);
+          alert(`✅ 成功匯入 ${newCards.length} 張卡片`);
+        }
+      } catch { alert('❌ 檔案格式有誤，請使用模板'); }
+    };
+    reader.readAsText(file); e.target.value = '';
+  };
+
+  const chars = ['全部', ...CHARACTERS];
+
+  return (
+    <div>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 8 }}>
+          <div className="card-title" style={{ marginBottom: 0 }}><span className="icon">📖</span> 圖鑑收藏</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button className="btn btn-outline btn-sm" onClick={downloadTemplate}>📄 下載模板</button>
+            <input ref={importRef} type="file" accept=".json" style={{ display: 'none' }} onChange={handleImport} />
+            <button className="btn btn-outline btn-sm" onClick={() => importRef.current.click()}>📥 批次匯入</button>
+            <button className="btn btn-primary btn-sm" onClick={() => setModal({})}>+ 手動新增</button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {chars.map(c => {
+            const cnt = c === '全部' ? collection.length : collection.filter(x => x.character===c).length;
+            const style = c !== '全部' && c !== char ? { background: CHAR_COLORS[c]?.bg, borderColor: CHAR_COLORS[c]?.border, color: CHAR_COLORS[c]?.color } : {};
+            return (
+              <button key={c} className={`char-tab ${char===c?'active':''}`} style={char===c?{}:style} onClick={() => setChar(c)}>
+                {c} ({cnt})
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+          <span className="info-chip"><span className="tag tag-ssr">SSR</span> × {ssrCount}</span>
+          <span className="info-chip"><span className="tag tag-sr">SR</span> × {srCount}</span>
+          <span className="info-chip">📦 共 {displayed.length} 張</span>
+        </div>
+
+        {displayed.length === 0 ? (
+          <div className="empty"><div className="icon">🃏</div><div>尚無卡片紀錄</div></div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+            {displayed.map(c => <CollectionCard key={c.id} card={c} onEdit={() => setModal({...c})} onDel={() => del(c.id)} />)}
+          </div>
+        )}
+      </div>
+
+      {modal !== null && <CollectionModal card={modal} onSave={save} onClose={() => setModal(null)} />}
+    </div>
+  );
+}
+
+function CollectionCard({ card, onEdit, onDel }) {
+  const col = CHAR_COLORS[card.character] || CHAR_COLORS['其他'];
+  return (
+    <div style={{ background: col.bg, border: `1px solid ${col.border}`, borderRadius: 10, padding: '14px', position: 'relative', transition: 'transform 0.15s, box-shadow 0.15s' }}
+      onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+      onMouseLeave={e => e.currentTarget.style.transform = ''}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <span className={`tag tag-${card.rarity.toLowerCase()}`}>{card.rarity}</span>
+        <span style={{ fontSize: 11, color: col.color, fontWeight: 600 }}>{card.character}</span>
+      </div>
+      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 4, lineHeight: 1.4 }}>{card.name}</div>
+      {card.duplicates > 1 && <div style={{ fontSize: 11, color: col.color }}>✦ ×{card.duplicates} 重複</div>}
+      <div style={{ fontSize: 11, color: 'var(--ink-light)', marginTop: 6, lineHeight: 1.5 }}>
+        {card.source && <div>📍 {card.source}</div>}
+        {card.obtained && <div>📅 {fmtDate(card.obtained)}</div>}
+      </div>
+      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+        <button className="btn btn-outline btn-xs" onClick={onEdit}>編輯</button>
+        <button className="btn btn-danger btn-xs" onClick={onDel}>×</button>
+      </div>
+    </div>
+  );
+}
+
+function CollectionModal({ card, onSave, onClose }) {
+  const [form, setForm] = useState({ name: '', rarity: 'SSR', character: '其他', source: '', obtained: today(), ...card });
+  const f = (k,v) => setForm(p=>({...p,[k]:v}));
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div className="modal-title">{form.id ? '✎ 編輯卡片' : '+ 手動新增卡片'}</div>
+        <div className="form-group" style={{ marginBottom: 12 }}><label>卡面名稱 *</label><input value={form.name} onChange={e=>f('name',e.target.value)} placeholder="e.g. 艾因·星野旅途" /></div>
+        <div className="form-row col3">
+          <div className="form-group"><label>稀有度</label><select value={form.rarity} onChange={e=>f('rarity',e.target.value)}>{RARITIES.map(r=><option key={r}>{r}</option>)}</select></div>
+          <div className="form-group"><label>角色</label><select value={form.character} onChange={e=>f('character',e.target.value)}>{CHARACTERS.map(c=><option key={c}>{c}</option>)}</select></div>
+          <div className="form-group"><label>獲得日期</label><input type="date" value={form.obtained} onChange={e=>f('obtained',e.target.value)} /></div>
+        </div>
+        <div className="form-group"><label>來源卡池</label><input value={form.source} onChange={e=>f('source',e.target.value)} placeholder="e.g. 限定卡池 / 常駐" /></div>
+        <div className="modal-footer">
+          <button className="btn btn-outline" onClick={onClose}>取消</button>
+          <button className="btn btn-primary" onClick={() => form.name && onSave(form)}>儲存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
